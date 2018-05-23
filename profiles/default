@@ -24,9 +24,15 @@ if [[ "${BARE_METAL^^}" != "TRUE" ]]; then
 fi
 
 # Configure neutron networking on overcloud
-source novarc
-./bin/neutron-ext-net --network-type flat -g $GATEWAY -c $CIDR_EXT -f $FIP_RANGE ext_net
-./bin/neutron-tenant-net --network-type $net_type -t admin -r provider-router -N $NAMESERVER private $CIDR_PRIV
+if [[ "x$(juju config keystone preferred-api-version)" == "x3" ]]; then
+    source novarcv3_project
+    ./bin/neutron-ext-net-ksv3 --project admin --network-type flat -g $GATEWAY -c $CIDR_EXT -f $FIP_RANGE ext_net
+    ./bin/neutron-tenant-net-ksv3 --project admin --network-type $net_type -r provider-router -N $NAMESERVER private $CIDR_PRIV
+else
+    source novarc
+    ./bin/neutron-ext-net --network-type flat -g $GATEWAY -c $CIDR_EXT -f $FIP_RANGE ext_net
+    ./bin/neutron-tenant-net --network-type $net_type -t admin -r provider-router -N $NAMESERVER private $CIDR_PRIV
+fi
 
 upload_image cloudimages xenial xenial-server-cloudimg-amd64-disk1.img
 upload_image cloudimages trusty trusty-server-cloudimg-amd64-disk1.img
